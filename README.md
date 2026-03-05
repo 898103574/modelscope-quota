@@ -40,7 +40,7 @@ python quota_gui.py
 ## 界面说明
 
 ```
-<img width="749" height="531" alt="余量查询" src="https://github.com/user-attachments/assets/75dc2696-fa97-408b-983f-a2d2f8399eef" />
+<img width="749" height="531" alt="demo" src="https://github.com/user-attachments/assets/ae47426a-a080-4133-b8c6-d35e506fbeca" />
 
 ```
 
