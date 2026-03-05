@@ -154,10 +154,12 @@ class QuotaApp:
         self.after_init()
     
     def load_saved_models(self):
-        """加载保存的模型"""
+        """加载保存的模型（不自动查询）"""
         saved_models = self.config.get("models", [])
         for model_id in saved_models:
-            self.add_model(model_id, save=False)
+            # 仅加载模型列表，不查询配额
+            self.models.append((model_id, None))
+        self.refresh_model_list()
     
     def after_init(self):
         """初始化完成后查询账户配额"""
@@ -266,7 +268,7 @@ class QuotaApp:
             self.selected_model = None
     
     def add_model_from_entry(self):
-        """从输入框添加模型"""
+        """从输入框添加模型（不自动查询）"""
         model_id = self.model_id_entry.get().strip()
         if not model_id:
             messagebox.showwarning("警告", "请输入模型ID")
@@ -282,8 +284,12 @@ class QuotaApp:
                 messagebox.showwarning("警告", "该模型已添加")
                 return
         
-        self.add_model(model_id, save=True)
+        # 直接添加模型，不查询配额
+        self.models.append((model_id, None))
+        self.refresh_model_list()
+        self.save_models_to_config()
         self.model_id_entry.delete(0, tk.END)
+        self.status_var.set(f"已添加 {model_id}，点击刷新获取配额")
     
     def add_model(self, model_id, save=True):
         """添加模型并查询配额"""
@@ -310,8 +316,13 @@ class QuotaApp:
         self.model_id_entry.config(state=tk.NORMAL)
         
         if "error" in quota:
-            messagebox.showerror("错误", f"查询失败: {quota['error']}")
-            self.status_var.set("查询失败")
+            # 不弹窗，只在状态栏显示错误
+            self.status_var.set(f"查询失败: {quota['error']}")
+            # 仍然添加到列表中
+            self.models.append((model_id, quota))
+            self.refresh_model_list()
+            if save:
+                self.save_models_to_config()
             return
         
         self.models.append((model_id, quota))
@@ -375,8 +386,14 @@ class QuotaApp:
     def on_model_refreshed(self, model_id, quota):
         """模型刷新完成回调"""
         if "error" in quota:
-            messagebox.showerror("错误", f"刷新失败: {quota['error']}")
-            self.status_var.set("刷新失败")
+            # 不弹窗，只在状态栏显示错误
+            self.status_var.set(f"刷新失败: {quota['error']}")
+            # 仍然更新列表中的数据
+            for i, (mid, _) in enumerate(self.models):
+                if mid == model_id:
+                    self.models[i] = (model_id, quota)
+                    break
+            self.refresh_model_list()
             return
         
         # 更新模型数据
@@ -417,8 +434,8 @@ class QuotaApp:
     def on_account_refreshed(self, quota):
         """账户配额刷新完成"""
         if "error" in quota:
-            messagebox.showerror("错误", f"刷新失败: {quota['error']}")
-            self.status_var.set("刷新失败")
+            # 不弹窗，只在状态栏显示
+            self.status_var.set(f"刷新失败: {quota['error']}")
             return
         
         self.update_account_display(quota)
@@ -449,7 +466,10 @@ class QuotaApp:
         
         # 重新填充
         for model_id, quota in self.models:
-            if "error" in quota:
+            if quota is None:
+                # 未查询过的模型
+                values = (model_id, "-", "-", "-", "-")
+            elif "error" in quota:
                 values = (model_id, "错误", "-", "-", "-")
             else:
                 model_info = quota.get("model", {})
