@@ -39,10 +39,9 @@ python quota_gui.py
 
 ## 界面说明
 
-```
+
 <img width="749" height="531" alt="demo" src="https://github.com/user-attachments/assets/ae47426a-a080-4133-b8c6-d35e506fbeca" />
 
-```
 
 ### 操作指南
 
