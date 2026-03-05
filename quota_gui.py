@@ -244,6 +244,7 @@ class QuotaApp:
         """设置右键菜单"""
         self.context_menu = tk.Menu(self.root, tearoff=0)
         self.context_menu.add_command(label="刷新", command=self.refresh_selected_model)
+        self.context_menu.add_command(label="复制模型ID", command=self.copy_model_id)
         self.context_menu.add_command(label="删除", command=self.delete_selected_model)
         
         # 绑定右键事件
@@ -367,6 +368,13 @@ class QuotaApp:
         """刷新选中的模型"""
         if self.selected_model:
             self.refresh_model(self.selected_model)
+    
+    def copy_model_id(self):
+        """复制选中的模型ID到剪贴板"""
+        if self.selected_model:
+            self.root.clipboard_clear()
+            self.root.clipboard_append(self.selected_model)
+            self.status_var.set(f"已复制: {self.selected_model}")
     
     def refresh_model(self, model_id):
         """刷新单个模型配额"""
